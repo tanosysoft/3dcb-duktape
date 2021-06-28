@@ -20,8 +20,8 @@ all:
 	echo "Building..."
 	$(MAKE) texture.c main.js.c $(EE_BIN)
 	
-	#echo "Stripping..."
-	#ee-strip $(EE_BIN)
+	echo "Stripping..."
+	$(EE_STRIP) --strip-all $(EE_BIN)
 
 	echo "Compressing..."
 	ps2-packer $(EE_BIN) $(EE_BIN_PKD) > /dev/null
