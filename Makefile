@@ -13,17 +13,18 @@
 EE_BIN = 3dcb.elf
 EE_BIN_PKD = 3D-CUBE.ELF
 EE_OBJS = main.o
-EE_LIBS = -ldraw -lgraph -lmath3d -lmf -lpacket -ldma
+EE_LIBS = -ldraw -lgraph -lmath3d -lpacket -ldma
+EE_INCS = -I./prep -I.
 
 all:
 	echo "Building..."
-		$(MAKE) texture.c $(EE_BIN)
+	$(MAKE) texture.c main.js.c $(EE_BIN)
 	
-	echo "Stripping..."
-	ee-strip $(EE_BIN)
+	#echo "Stripping..."
+	#ee-strip $(EE_BIN)
 
-	echo "Compressing..."
-	ps2-packer $(EE_BIN) $(EE_BIN_PKD) > /dev/null
+	#echo "Compressing..."
+	#ps2-packer $(EE_BIN) $(EE_BIN_PKD) > /dev/null
 
 # You can replace the mickey.raw texture below by yours.
 # Just pick up a 512x512 24-Bit RGB BMP image, then convert it to PS2 BGR RAW, using bmp2raw tool
@@ -31,9 +32,12 @@ all:
 texture.c:
 	bin2c mickey.raw texture.c texture
 
+main.js.c:
+	bin2c main.js main.js.c javascript
+
 clean:
 	echo "Cleaning..."
-	rm -f *.ELF *.elf *.o texture.c
+	rm -f *.ELF *.elf *.o texture.c main.js.c
 
 rebuild: clean all
 

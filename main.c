@@ -30,6 +30,9 @@
 
 #include "texture.c"
 #include "mesh_data.c"
+#include "prep/duktape.c"
+#include "duk_console.c"
+#include "main.js.c"
 
 extern unsigned char texture[];
 
@@ -294,6 +297,25 @@ int render(framebuffer_t *frame, zbuffer_t *z)
 
 int main(int argc, char **argv)
 {
+	duk_context *ctx;
+
+	ctx = duk_create_heap_default();
+	if (!ctx) {
+		return 1;
+	}
+
+	duk_console_init(ctx, DUK_CONSOLE_PROXY_WRAPPER /*flags*/);
+	printf("top after init: %ld\n", (long) duk_get_top(ctx));
+
+  printf("Evaling: %s\n", (const char *)javascript);
+  if (duk_peval_string(ctx, (const char *)javascript) != 0) { printf("DUK ERROR!\n"); }
+  printf("--> %s\n", duk_safe_to_string(ctx, -1));
+  duk_pop(ctx);
+
+	printf("Done\n");
+	duk_destroy_heap(ctx);
+
+	// === End of Duktape code, start of 3dcb main code ===
 
 	// The buffers to be used.
 	framebuffer_t frame;
