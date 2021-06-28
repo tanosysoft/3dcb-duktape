@@ -23,8 +23,8 @@ all:
 	#echo "Stripping..."
 	#ee-strip $(EE_BIN)
 
-	#echo "Compressing..."
-	#ps2-packer $(EE_BIN) $(EE_BIN_PKD) > /dev/null
+	echo "Compressing..."
+	ps2-packer $(EE_BIN) $(EE_BIN_PKD) > /dev/null
 
 # You can replace the mickey.raw texture below by yours.
 # Just pick up a 512x512 24-Bit RGB BMP image, then convert it to PS2 BGR RAW, using bmp2raw tool

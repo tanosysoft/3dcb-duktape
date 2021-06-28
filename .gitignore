@@ -1,4 +1,5 @@
 *.elf
+*.ELF
 *.o
 main.js.c
 texture.c
