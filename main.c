@@ -154,32 +154,33 @@ void setup_texture(texbuffer_t *texbuf)
 
 }
 
-int render(framebuffer_t *frame, zbuffer_t *z)
-{
+int i;
+int context = 0;
 
-	int i;
-	int context = 0;
+packet_t *packets[2];
+packet_t *current;
 
-	packet_t *packets[2];
-	packet_t *current;
+qword_t *q;
+u64 *dw;
 
-	qword_t *q;
-	u64 *dw;
+MATRIX local_world;
+MATRIX world_view;
+MATRIX view_screen;
+MATRIX local_screen;
 
-	MATRIX local_world;
-	MATRIX world_view;
-	MATRIX view_screen;
-	MATRIX local_screen;
+prim_t prim;
+color_t color;
 
-	prim_t prim;
-	color_t color;
+VECTOR *temp_vertices;
 
-	VECTOR *temp_vertices;
+xyz_t *xyz;
+color_t *rgbaq;
+texel_t *st;
 
-	xyz_t *xyz;
-	color_t *rgbaq;
-	texel_t *st;
+framebuffer_t frame;
+zbuffer_t z;
 
+duk_ret_t render_prepare() {
 	packets[0] = packet_init(100,PACKET_NORMAL);
 	packets[1] = packet_init(100,PACKET_NORMAL);
 
@@ -210,116 +211,101 @@ int render(framebuffer_t *frame, zbuffer_t *z)
 	// Create the view_screen matrix.
 	create_view_screen(view_screen, graph_aspect_ratio(), -3.00f, 3.00f, -3.00f, 3.00f, 1.00f, 2000.00f);
 
-	// The main loop...
-	for (;;)
-	{
-
-		current = packets[context];
-
-		// Spin the cube a bit.
-		object_rotation[0] += 0.008f; while (object_rotation[0] > 3.14f) { object_rotation[0] -= 6.28f; }
-		object_rotation[1] += 0.012f; while (object_rotation[1] > 3.14f) { object_rotation[1] -= 6.28f; }
-
-		// Create the local_world matrix.
-		create_local_world(local_world, object_position, object_rotation);
-
-		// Create the world_view matrix.
-		create_world_view(world_view, camera_position, camera_rotation);
-
-		// Create the local_screen matrix.
-		create_local_screen(local_screen, local_world, world_view, view_screen);
-
-		// Calculate the vertex values.
-		calculate_vertices(temp_vertices, vertex_count, vertices, local_screen);
-
-		// Generate the XYZ register values.
-		draw_convert_xyz(xyz, 2048, 2048, 32, vertex_count, (vertex_f_t*)temp_vertices);
-
-		// Convert floating point colours to fixed point.
-		draw_convert_rgbq(rgbaq, vertex_count, (vertex_f_t*)temp_vertices, (color_f_t*)colours,color.a);
-
-		// Generate the ST register values.
-		draw_convert_st(st, vertex_count, (vertex_f_t*)temp_vertices, (texel_f_t*)coordinates);
-
-		q = current->data;
-
-		// Clear framebuffer but don't update zbuffer.
-		q = draw_disable_tests(q,0,z);
-		q = draw_clear(q,0,2048.0f-320.0f,2048.0f-256.0f,frame->width,frame->height,0x40,0x40,0x40);
-		q = draw_enable_tests(q,0,z);
-
-		// Draw the triangles using triangle primitive type.
-		// Use a 64-bit pointer to simplify adding data to the packet.
-		dw = (u64*)draw_prim_start(q,0,&prim, &color);
-
-		for(i = 0; i < points_count; i++)
-		{
-			*dw++ = rgbaq[points[i]].rgbaq;
-			*dw++ = st[points[i]].uv;
-			*dw++ = xyz[points[i]].xyz;
-		}
-
-		// Check if we're in middle of a qword or not.
-		if ((u32)dw % 16)
-		{
-
-			*dw++ = 0;
-
-		}
-
-		// Only 3 registers rgbaq/st/xyz were used (standard STQ reglist)
-		q = draw_prim_end((qword_t*)dw,3,DRAW_STQ_REGLIST);
-
-		// Setup a finish event.
-		q = draw_finish(q);
-
-		// Now send our current dma chain.
-		dma_wait_fast();
-		dma_channel_send_normal(DMA_CHANNEL_GIF,current->data, q - current->data, 0, 0);
-
-		// Now switch our packets so we can process data while the DMAC is working.
-		context ^= 1;
-
-		// Wait for scene to finish drawing
-		draw_wait_finish();
-
-		graph_wait_vsync();
-
-	}
-
-	free(packets[0]);
-	free(packets[1]);
-
-	// End program.
-	return 0;
-
+  return 0;
 }
 
-int main(int argc, char **argv)
-{
+duk_ret_t render_frame() {
+  current = packets[context];
+
+  // Spin the cube a bit.
+  object_rotation[0] += 0.008f; while (object_rotation[0] > 3.14f) { object_rotation[0] -= 6.28f; }
+  object_rotation[1] += 0.012f; while (object_rotation[1] > 3.14f) { object_rotation[1] -= 6.28f; }
+
+  // Create the local_world matrix.
+  create_local_world(local_world, object_position, object_rotation);
+
+  // Create the world_view matrix.
+  create_world_view(world_view, camera_position, camera_rotation);
+
+  // Create the local_screen matrix.
+  create_local_screen(local_screen, local_world, world_view, view_screen);
+
+  // Calculate the vertex values.
+  calculate_vertices(temp_vertices, vertex_count, vertices, local_screen);
+
+  // Generate the XYZ register values.
+  draw_convert_xyz(xyz, 2048, 2048, 32, vertex_count, (vertex_f_t*)temp_vertices);
+
+  // Convert floating point colours to fixed point.
+  draw_convert_rgbq(rgbaq, vertex_count, (vertex_f_t*)temp_vertices, (color_f_t*)colours,color.a);
+
+  // Generate the ST register values.
+  draw_convert_st(st, vertex_count, (vertex_f_t*)temp_vertices, (texel_f_t*)coordinates);
+
+  q = current->data;
+
+  // Clear framebuffer but don't update zbuffer.
+  q = draw_disable_tests(q,0,&z);
+  q = draw_clear(q,0,2048.0f-320.0f,2048.0f-256.0f,frame.width,frame.height,0x40,0x40,0x40);
+  q = draw_enable_tests(q,0,&z);
+
+  // Draw the triangles using triangle primitive type.
+  // Use a 64-bit pointer to simplify adding data to the packet.
+  dw = (u64*)draw_prim_start(q,0,&prim, &color);
+
+  for(i = 0; i < points_count; i++)
+  {
+    *dw++ = rgbaq[points[i]].rgbaq;
+    *dw++ = st[points[i]].uv;
+    *dw++ = xyz[points[i]].xyz;
+  }
+
+  // Check if we're in middle of a qword or not.
+  if ((u32)dw % 16)
+  {
+
+    *dw++ = 0;
+
+  }
+
+  // Only 3 registers rgbaq/st/xyz were used (standard STQ reglist)
+  q = draw_prim_end((qword_t*)dw,3,DRAW_STQ_REGLIST);
+
+  // Setup a finish event.
+  q = draw_finish(q);
+
+  // Now send our current dma chain.
+  dma_wait_fast();
+  dma_channel_send_normal(DMA_CHANNEL_GIF,current->data, q - current->data, 0, 0);
+
+  // Now switch our packets so we can process data while the DMAC is working.
+  context ^= 1;
+
+  // Wait for scene to finish drawing
+  draw_wait_finish();
+
+  graph_wait_vsync();
+
+  return 0;
+}
+
+int main(int argc, char **argv) {
 	duk_context *ctx;
 
 	ctx = duk_create_heap_default();
-	if (!ctx) {
-		return 1;
-	}
+	if (!ctx) { return 1; }
 
 	duk_console_init(ctx, DUK_CONSOLE_PROXY_WRAPPER /*flags*/);
 	printf("top after init: %ld\n", (long) duk_get_top(ctx));
 
-  printf("Evaling: %s\n", (const char *)javascript);
-  if (duk_peval_string(ctx, (const char *)javascript) != 0) { printf("DUK ERROR!\n"); }
-  printf("--> %s\n", duk_safe_to_string(ctx, -1));
-  duk_pop(ctx);
-
-	printf("Done\n");
-	duk_destroy_heap(ctx);
-
-	// === End of Duktape code, start of 3dcb main code ===
+	duk_push_c_function(ctx, render_prepare, 0 /*nargs*/);
+	duk_put_global_string(ctx, "render_prepare");
+	duk_push_c_function(ctx, render_frame, 0 /*nargs*/);
+	duk_put_global_string(ctx, "render_frame");
 
 	// The buffers to be used.
-	framebuffer_t frame;
-	zbuffer_t z;
+	//framebuffer_t frame;
+	//zbuffer_t z;
 	texbuffer_t texbuf;
 
 	// Init GIF dma channel.
@@ -338,8 +324,16 @@ int main(int argc, char **argv)
 	// Setup texture buffer
 	setup_texture(&texbuf);
 
-	// Render textured cube
-	render(&frame,&z);
+	// Run JavaScript
+	if (duk_peval_string(ctx, (const char *)javascript) != 0) {
+		printf("DUK ERROR!\n");
+		printf("--> %s\n", duk_safe_to_string(ctx, -1));
+		return 1;
+	}
+
+	duk_destroy_heap(ctx);
+	free(packets[0]);
+	free(packets[1]);
 
 	// Sleep
 	SleepThread();
