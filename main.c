@@ -298,10 +298,12 @@ int main(int argc, char **argv) {
   duk_console_init(ctx, DUK_CONSOLE_PROXY_WRAPPER /*flags*/);
   printf("top after init: %ld\n", (long) duk_get_top(ctx));
 
-  duk_push_c_function(ctx, render_prepare, 0 /*nargs*/);
-  duk_put_global_string(ctx, "render_prepare");
-  duk_push_c_function(ctx, render_frame, 0 /*nargs*/);
-  duk_put_global_string(ctx, "render_frame");
+  duk_push_object(ctx);
+  duk_push_c_function(ctx, render_prepare, 0);
+  duk_put_prop_string(ctx, -2, "render_prepare");
+  duk_push_c_function(ctx, render_frame, 0);
+  duk_put_prop_string(ctx, -2, "render_frame");
+  duk_put_global_string(ctx, "c");
 
   // The buffers to be used.
   //framebuffer_t frame;
@@ -325,7 +327,7 @@ int main(int argc, char **argv) {
   setup_texture(&texbuf);
 
   // Run JavaScript
-  if (duk_peval_string(ctx, (const char *)javascript) != 0) {
+  if (duk_peval_lstring(ctx, (const char *)javascript, size_javascript) != 0) {
     printf("DUK ERROR!\n");
     printf("--> %s\n", duk_safe_to_string(ctx, -1));
     return 1;
