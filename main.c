@@ -289,6 +289,14 @@ duk_ret_t render_frame() {
   return 0;
 }
 
+duk_ret_t set_vector(duk_context *ctx) {
+  VECTOR *v = duk_get_pointer(ctx, 0);
+  int i = (int) duk_get_number(ctx, 1);
+  float x = (float) duk_get_number(ctx, 2);
+  (*v)[i] = x;
+  return 0;
+}
+
 int main(int argc, char **argv) {
   duk_context *ctx;
 
@@ -299,10 +307,23 @@ int main(int argc, char **argv) {
   printf("top after init: %ld\n", (long) duk_get_top(ctx));
 
   duk_push_object(ctx);
+
   duk_push_c_function(ctx, render_prepare, 0);
   duk_put_prop_string(ctx, -2, "render_prepare");
+
   duk_push_c_function(ctx, render_frame, 0);
   duk_put_prop_string(ctx, -2, "render_frame");
+
+  duk_push_c_function(ctx, set_vector, 3);
+  duk_put_prop_string(ctx, -2, "set_vector");
+
+  duk_push_array(ctx);
+  duk_push_pointer(ctx, packets[0]);
+  duk_put_prop_index(ctx, -2, 0);
+  duk_push_pointer(ctx, packets[1]);
+  duk_put_prop_index(ctx, -2, 0);
+  duk_put_prop_string(ctx, -2, "packets");
+
   duk_put_global_string(ctx, "c");
 
   // The buffers to be used.
