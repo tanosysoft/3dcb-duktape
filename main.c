@@ -45,112 +45,112 @@ VECTOR camera_rotation = { 0.00f, 0.00f,   0.00f, 1.00f };
 void init_gs(framebuffer_t *frame, zbuffer_t *z, texbuffer_t *texbuf)
 {
 
-	// Define a 32-bit 640x448 framebuffer.
-	frame->width = 640;
-	frame->height = 448;
-	frame->mask = 0;
-	frame->psm = GS_PSM_24;
-	frame->address = graph_vram_allocate(frame->width,frame->height, frame->psm, GRAPH_ALIGN_PAGE);
+  // Define a 32-bit 640x448 framebuffer.
+  frame->width = 640;
+  frame->height = 448;
+  frame->mask = 0;
+  frame->psm = GS_PSM_24;
+  frame->address = graph_vram_allocate(frame->width,frame->height, frame->psm, GRAPH_ALIGN_PAGE);
 
-	// Enable the zbuffer.
-	z->enable = DRAW_ENABLE;
-	z->mask = 0;
-	z->method = ZTEST_METHOD_GREATER_EQUAL;
-	z->zsm = GS_ZBUF_32;
-	z->address = graph_vram_allocate(frame->width,frame->height,z->zsm, GRAPH_ALIGN_PAGE);
+  // Enable the zbuffer.
+  z->enable = DRAW_ENABLE;
+  z->mask = 0;
+  z->method = ZTEST_METHOD_GREATER_EQUAL;
+  z->zsm = GS_ZBUF_32;
+  z->address = graph_vram_allocate(frame->width,frame->height,z->zsm, GRAPH_ALIGN_PAGE);
 
-	// Allocate some vram for the texture buffer
-	texbuf->width = 512;
-	texbuf->psm = GS_PSM_24;
-	texbuf->address = graph_vram_allocate(512,512,GS_PSM_24,GRAPH_ALIGN_BLOCK);
+  // Allocate some vram for the texture buffer
+  texbuf->width = 512;
+  texbuf->psm = GS_PSM_24;
+  texbuf->address = graph_vram_allocate(512,512,GS_PSM_24,GRAPH_ALIGN_BLOCK);
 
-	// Initialize the screen and tie the first framebuffer to the read circuits.
-	graph_initialize(frame->address,frame->width,frame->height,frame->psm,0,0);
+  // Initialize the screen and tie the first framebuffer to the read circuits.
+  graph_initialize(frame->address,frame->width,frame->height,frame->psm,0,0);
 
 }
 
 void init_drawing_environment(framebuffer_t *frame, zbuffer_t *z)
 {
 
-	packet_t *packet = packet_init(20,PACKET_NORMAL);
+  packet_t *packet = packet_init(20,PACKET_NORMAL);
 
-	// This is our generic qword pointer.
-	qword_t *q = packet->data;
+  // This is our generic qword pointer.
+  qword_t *q = packet->data;
 
-	// This will setup a default drawing environment.
-	q = draw_setup_environment(q,0,frame,z);
+  // This will setup a default drawing environment.
+  q = draw_setup_environment(q,0,frame,z);
 
-	// Now reset the primitive origin to 2048-width/2,2048-height/2.
-	q = draw_primitive_xyoffset(q,0,(2048-(frame->width/2)),(2048-(frame->height/2)));
+  // Now reset the primitive origin to 2048-width/2,2048-height/2.
+  q = draw_primitive_xyoffset(q,0,(2048-(frame->width/2)),(2048-(frame->height/2)));
 
-	// Finish setting up the environment.
-	q = draw_finish(q);
+  // Finish setting up the environment.
+  q = draw_finish(q);
 
-	// Now send the packet, no need to wait since it's the first.
-	dma_channel_send_normal(DMA_CHANNEL_GIF,packet->data,q - packet->data, 0, 0);
-	dma_wait_fast();
+  // Now send the packet, no need to wait since it's the first.
+  dma_channel_send_normal(DMA_CHANNEL_GIF,packet->data,q - packet->data, 0, 0);
+  dma_wait_fast();
 
-	packet_free(packet);
+  packet_free(packet);
 
 }
 
 void load_texture(texbuffer_t *texbuf)
 {
 
-	packet_t *packet = packet_init(50,PACKET_NORMAL);
+  packet_t *packet = packet_init(50,PACKET_NORMAL);
 
-	qword_t *q = packet->data;
+  qword_t *q = packet->data;
 
-	q = packet->data;
+  q = packet->data;
 
-	q = draw_texture_transfer(q,texture,512,512,GS_PSM_24,texbuf->address,texbuf->width);
-	q = draw_texture_flush(q);
+  q = draw_texture_transfer(q,texture,512,512,GS_PSM_24,texbuf->address,texbuf->width);
+  q = draw_texture_flush(q);
 
-	dma_channel_send_chain(DMA_CHANNEL_GIF,packet->data, q - packet->data, 0,0);
-	dma_wait_fast();
+  dma_channel_send_chain(DMA_CHANNEL_GIF,packet->data, q - packet->data, 0,0);
+  dma_wait_fast();
 
-	packet_free(packet);
+  packet_free(packet);
 
 }
 
 void setup_texture(texbuffer_t *texbuf)
 {
 
-	packet_t *packet = packet_init(10,PACKET_NORMAL);
+  packet_t *packet = packet_init(10,PACKET_NORMAL);
 
-	qword_t *q = packet->data;
+  qword_t *q = packet->data;
 
-	// Using a texture involves setting up a lot of information.
-	clutbuffer_t clut;
+  // Using a texture involves setting up a lot of information.
+  clutbuffer_t clut;
 
-	lod_t lod;
+  lod_t lod;
 
-	lod.calculation = LOD_USE_K;
-	lod.max_level = 0;
-	lod.mag_filter = LOD_MAG_NEAREST;
-	lod.min_filter = LOD_MIN_NEAREST;
-	lod.l = 0;
-	lod.k = 0;
+  lod.calculation = LOD_USE_K;
+  lod.max_level = 0;
+  lod.mag_filter = LOD_MAG_NEAREST;
+  lod.min_filter = LOD_MIN_NEAREST;
+  lod.l = 0;
+  lod.k = 0;
 
-	texbuf->info.width = draw_log2(512);
-	texbuf->info.height = draw_log2(512);
-	texbuf->info.components = TEXTURE_COMPONENTS_RGB;
-	texbuf->info.function = TEXTURE_FUNCTION_DECAL;
+  texbuf->info.width = draw_log2(512);
+  texbuf->info.height = draw_log2(512);
+  texbuf->info.components = TEXTURE_COMPONENTS_RGB;
+  texbuf->info.function = TEXTURE_FUNCTION_DECAL;
 
-	clut.storage_mode = CLUT_STORAGE_MODE1;
-	clut.start = 0;
-	clut.psm = 0;
-	clut.load_method = CLUT_NO_LOAD;
-	clut.address = 0;
+  clut.storage_mode = CLUT_STORAGE_MODE1;
+  clut.start = 0;
+  clut.psm = 0;
+  clut.load_method = CLUT_NO_LOAD;
+  clut.address = 0;
 
-	q = draw_texture_sampling(q,0,&lod);
-	q = draw_texturebuffer(q,0,texbuf,&clut);
+  q = draw_texture_sampling(q,0,&lod);
+  q = draw_texturebuffer(q,0,texbuf,&clut);
 
-	// Now send the packet, no need to wait since it's the first.
-	dma_channel_send_normal(DMA_CHANNEL_GIF,packet->data,q - packet->data, 0, 0);
-	dma_wait_fast();
+  // Now send the packet, no need to wait since it's the first.
+  dma_channel_send_normal(DMA_CHANNEL_GIF,packet->data,q - packet->data, 0, 0);
+  dma_wait_fast();
 
-	packet_free(packet);
+  packet_free(packet);
 
 }
 
@@ -181,35 +181,35 @@ framebuffer_t frame;
 zbuffer_t z;
 
 duk_ret_t render_prepare() {
-	packets[0] = packet_init(100,PACKET_NORMAL);
-	packets[1] = packet_init(100,PACKET_NORMAL);
+  packets[0] = packet_init(100,PACKET_NORMAL);
+  packets[1] = packet_init(100,PACKET_NORMAL);
 
-	// Define the triangle primitive we want to use.
-	prim.type = PRIM_TRIANGLE;
-	prim.shading = PRIM_SHADE_GOURAUD;
-	prim.mapping = DRAW_ENABLE;
-	prim.fogging = DRAW_DISABLE;
-	prim.blending = DRAW_ENABLE;
-	prim.antialiasing = DRAW_DISABLE;
-	prim.mapping_type = PRIM_MAP_ST;
-	prim.colorfix = PRIM_UNFIXED;
+  // Define the triangle primitive we want to use.
+  prim.type = PRIM_TRIANGLE;
+  prim.shading = PRIM_SHADE_GOURAUD;
+  prim.mapping = DRAW_ENABLE;
+  prim.fogging = DRAW_DISABLE;
+  prim.blending = DRAW_ENABLE;
+  prim.antialiasing = DRAW_DISABLE;
+  prim.mapping_type = PRIM_MAP_ST;
+  prim.colorfix = PRIM_UNFIXED;
 
-	color.r = 0x80;
-	color.g = 0x80;
-	color.b = 0x80;
-	color.a = 0x40;
-	color.q = 1.0f;
+  color.r = 0x80;
+  color.g = 0x80;
+  color.b = 0x80;
+  color.a = 0x40;
+  color.q = 1.0f;
 
-	// Allocate calculation space.
-	temp_vertices = memalign(128, sizeof(VECTOR) * vertex_count);
+  // Allocate calculation space.
+  temp_vertices = memalign(128, sizeof(VECTOR) * vertex_count);
 
-	// Allocate register space.
-	xyz   = memalign(128, sizeof(u64) * vertex_count);
-	rgbaq = memalign(128, sizeof(u64) * vertex_count);
-	st    = memalign(128, sizeof(u64) * vertex_count);
+  // Allocate register space.
+  xyz   = memalign(128, sizeof(u64) * vertex_count);
+  rgbaq = memalign(128, sizeof(u64) * vertex_count);
+  st    = memalign(128, sizeof(u64) * vertex_count);
 
-	// Create the view_screen matrix.
-	create_view_screen(view_screen, graph_aspect_ratio(), -3.00f, 3.00f, -3.00f, 3.00f, 1.00f, 2000.00f);
+  // Create the view_screen matrix.
+  create_view_screen(view_screen, graph_aspect_ratio(), -3.00f, 3.00f, -3.00f, 3.00f, 1.00f, 2000.00f);
 
   return 0;
 }
@@ -290,55 +290,55 @@ duk_ret_t render_frame() {
 }
 
 int main(int argc, char **argv) {
-	duk_context *ctx;
+  duk_context *ctx;
 
-	ctx = duk_create_heap_default();
-	if (!ctx) { return 1; }
+  ctx = duk_create_heap_default();
+  if (!ctx) { return 1; }
 
-	duk_console_init(ctx, DUK_CONSOLE_PROXY_WRAPPER /*flags*/);
-	printf("top after init: %ld\n", (long) duk_get_top(ctx));
+  duk_console_init(ctx, DUK_CONSOLE_PROXY_WRAPPER /*flags*/);
+  printf("top after init: %ld\n", (long) duk_get_top(ctx));
 
-	duk_push_c_function(ctx, render_prepare, 0 /*nargs*/);
-	duk_put_global_string(ctx, "render_prepare");
-	duk_push_c_function(ctx, render_frame, 0 /*nargs*/);
-	duk_put_global_string(ctx, "render_frame");
+  duk_push_c_function(ctx, render_prepare, 0 /*nargs*/);
+  duk_put_global_string(ctx, "render_prepare");
+  duk_push_c_function(ctx, render_frame, 0 /*nargs*/);
+  duk_put_global_string(ctx, "render_frame");
 
-	// The buffers to be used.
-	//framebuffer_t frame;
-	//zbuffer_t z;
-	texbuffer_t texbuf;
+  // The buffers to be used.
+  //framebuffer_t frame;
+  //zbuffer_t z;
+  texbuffer_t texbuf;
 
-	// Init GIF dma channel.
-	dma_channel_initialize(DMA_CHANNEL_GIF,NULL,0);
-	dma_channel_fast_waits(DMA_CHANNEL_GIF);
+  // Init GIF dma channel.
+  dma_channel_initialize(DMA_CHANNEL_GIF,NULL,0);
+  dma_channel_fast_waits(DMA_CHANNEL_GIF);
 
-	// Init the GS, framebuffer, zbuffer, and texture buffer.
-	init_gs(&frame, &z, &texbuf);
+  // Init the GS, framebuffer, zbuffer, and texture buffer.
+  init_gs(&frame, &z, &texbuf);
 
-	// Init the drawing environment and framebuffer.
-	init_drawing_environment(&frame,&z);
+  // Init the drawing environment and framebuffer.
+  init_drawing_environment(&frame,&z);
 
-	// Load the texture into vram.
-	load_texture(&texbuf);
+  // Load the texture into vram.
+  load_texture(&texbuf);
 
-	// Setup texture buffer
-	setup_texture(&texbuf);
+  // Setup texture buffer
+  setup_texture(&texbuf);
 
-	// Run JavaScript
-	if (duk_peval_string(ctx, (const char *)javascript) != 0) {
-		printf("DUK ERROR!\n");
-		printf("--> %s\n", duk_safe_to_string(ctx, -1));
-		return 1;
-	}
+  // Run JavaScript
+  if (duk_peval_string(ctx, (const char *)javascript) != 0) {
+    printf("DUK ERROR!\n");
+    printf("--> %s\n", duk_safe_to_string(ctx, -1));
+    return 1;
+  }
 
-	duk_destroy_heap(ctx);
-	free(packets[0]);
-	free(packets[1]);
+  duk_destroy_heap(ctx);
+  free(packets[0]);
+  free(packets[1]);
 
-	// Sleep
-	SleepThread();
+  // Sleep
+  SleepThread();
 
-	// End program.
-	return 0;
+  // End program.
+  return 0;
 
 }
