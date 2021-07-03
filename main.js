@@ -37,7 +37,7 @@ while(true) {
   }
 
   // Check if we're in middle of a qword or not.
-  //if (dw % 16) { memwrite_u64(dw, 0); dw += 8 }
+  if (dw % 16) { memwrite_u64(dw, 0); dw += 8 }
 
   // Only 3 registers rgbaq/st/xyz were used (standard STQ reglist)
   q = c.draw_prim_end(dw, 3, c.DRAW_STQ_REGLIST);

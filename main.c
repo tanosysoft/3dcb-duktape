@@ -225,13 +225,13 @@ duk_ret_t get_packet_data(duk_context *ctx) {
 }
 
 duk_ret_t memwrite_u64(duk_context *ctx) {
-  void *p = duk_is_pointer(ctx, 0) ? duk_get_pointer(ctx, 0) : (void *) duk_get_number(ctx, 0);
+  u64 *p = duk_is_pointer(ctx, 0) ? duk_get_pointer(ctx, 0) : (u64 *) duk_get_uint(ctx, 0);
   *(p + duk_get_uint(ctx, 1)) = (u64) duk_get_number(ctx, 2);
   return 0;
 }
 
 duk_ret_t memread_int(duk_context *ctx) {
-  int *p = duk_is_pointer(ctx, 0) ? duk_get_pointer(ctx, 0) : (int *) duk_get_number(ctx, 0);
+  int *p = duk_is_pointer(ctx, 0) ? duk_get_pointer(ctx, 0) : (int *) duk_get_uint(ctx, 0);
   duk_push_int(ctx, *(p + duk_get_uint(ctx, 1)));
   return 1;
 }
@@ -417,6 +417,8 @@ int main(int argc, char **argv) {
   duk_push_c_function(ctx, get_packet_data, 1); duk_put_prop_string(ctx, -2, "get_packet_data");
   duk_push_c_function(ctx, ptradd, 2); duk_put_prop_string(ctx, -2, "ptradd");
   duk_push_c_function(ctx, ptrsub, 2); duk_put_prop_string(ctx, -2, "ptrsub");
+  duk_push_c_function(ctx, memwrite_u64, 2); duk_put_prop_string(ctx, -2, "memwrite_u64");
+  duk_push_c_function(ctx, memread_int, 2); duk_put_prop_string(ctx, -2, "memread_int");
 
   duk_push_c_function(ctx, create_local_world_thunk, 3); duk_put_prop_string(ctx, -2, "create_local_world");
   duk_push_c_function(ctx, create_world_view_thunk, 3); duk_put_prop_string(ctx, -2, "create_world_view");
@@ -446,6 +448,8 @@ int main(int argc, char **argv) {
   duk_push_pointer(ctx, local_screen); duk_put_prop_string(ctx, -2, "local_screen");
   duk_push_pointer(ctx, view_screen); duk_put_prop_string(ctx, -2, "view_screen");
   duk_push_pointer(ctx, temp_vertices); duk_put_prop_string(ctx, -2, "temp_vertices");
+  duk_push_pointer(ctx, points); duk_put_prop_string(ctx, -2, "points");
+  duk_push_uint(ctx, points_count); duk_put_prop_string(ctx, -2, "points_count");
   duk_push_pointer(ctx, vertices); duk_put_prop_string(ctx, -2, "vertices");
   duk_push_uint(ctx, vertex_count); duk_put_prop_string(ctx, -2, "vertex_count");
   duk_push_pointer(ctx, xyz); duk_put_prop_string(ctx, -2, "xyz");
@@ -453,6 +457,9 @@ int main(int argc, char **argv) {
   duk_push_pointer(ctx, colours); duk_put_prop_string(ctx, -2, "colours");
   duk_push_pointer(ctx, st); duk_put_prop_string(ctx, -2, "st");
   duk_push_pointer(ctx, coordinates); duk_put_prop_string(ctx, -2, "coordinates");
+  duk_push_pointer(ctx, &prim); duk_put_prop_string(ctx, -2, "prim");
+  duk_push_pointer(ctx, &color); duk_put_prop_string(ctx, -2, "color");
+  duk_push_pointer(ctx, &z); duk_put_prop_string(ctx, -2, "z");
 
   duk_push_array(ctx);
   duk_push_pointer(ctx, packets[0]);
