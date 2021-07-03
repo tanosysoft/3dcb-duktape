@@ -321,38 +321,6 @@ int main(int argc, char **argv) {
   duk_console_init(ctx, DUK_CONSOLE_PROXY_WRAPPER /*flags*/);
   printf("top after init: %ld\n", (long) duk_get_top(ctx));
 
-  duk_push_object(ctx);
-
-  duk_push_c_function(ctx, render_prepare, 0); duk_put_prop_string(ctx, -2, "render_prepare");
-  duk_push_c_function(ctx, render_frame, 0); duk_put_prop_string(ctx, -2, "render_frame");
-  duk_push_c_function(ctx, set_vector, 3); duk_put_prop_string(ctx, -2, "set_vector");
-  duk_push_c_function(ctx, create_local_world_thunk, 3); duk_put_prop_string(ctx, -2, "create_local_world_thunk");
-  duk_push_c_function(ctx, create_world_view_thunk, 3); duk_put_prop_string(ctx, -2, "create_world_view_thunk");
-  duk_push_c_function(ctx, create_local_screen, 4); duk_put_prop_string(ctx, -2, "create_local_screen");
-  duk_push_c_function(ctx, calculate_vertices, 3); duk_put_prop_string(ctx, -2, "calculate_vertices");
-
-  duk_push_pointer(ctx, object_position); duk_put_prop_string(ctx, -2, "object_position");
-  duk_push_pointer(ctx, object_rotation); duk_put_prop_string(ctx, -2, "object_rotation");
-  duk_push_pointer(ctx, camera_position); duk_put_prop_string(ctx, -2, "camera_position");
-  duk_push_pointer(ctx, camera_rotation); duk_put_prop_string(ctx, -2, "camera_rotation");
-  duk_push_pointer(ctx, local_world); duk_put_prop_string(ctx, -2, "local_world");
-  duk_push_pointer(ctx, world_view); duk_put_prop_string(ctx, -2, "world_view");
-  duk_push_pointer(ctx, local_screen); duk_put_prop_string(ctx, -2, "local_screen");
-  duk_push_pointer(ctx, local_world); duk_put_prop_string(ctx, -2, "local_world");
-  duk_push_pointer(ctx, view_screen); duk_put_prop_string(ctx, -2, "view_screen");
-  duk_push_pointer(ctx, temp_vertices); duk_put_prop_string(ctx, -2, "temp_vertices");
-  duk_push_pointer(ctx, vertices); duk_put_prop_string(ctx, -2, "vertices");
-  duk_push_uint(ctx, vertex_count); duk_put_prop_string(ctx, -2, "vertex_count");
-
-  duk_push_array(ctx);
-  duk_push_pointer(ctx, packets[0]);
-  duk_put_prop_index(ctx, -2, 0);
-  duk_push_pointer(ctx, packets[1]);
-  duk_put_prop_index(ctx, -2, 0);
-  duk_put_prop_string(ctx, -2, "packets");
-
-  duk_put_global_string(ctx, "c");
-
   // The buffers to be used.
   //framebuffer_t frame;
   //zbuffer_t z;
@@ -373,6 +341,38 @@ int main(int argc, char **argv) {
 
   // Setup texture buffer
   setup_texture(&texbuf);
+
+  render_prepare();
+
+  duk_push_object(ctx);
+
+  duk_push_c_function(ctx, render_frame, 0); duk_put_prop_string(ctx, -2, "render_frame");
+  duk_push_c_function(ctx, set_vector, 3); duk_put_prop_string(ctx, -2, "set_vector");
+  duk_push_c_function(ctx, create_local_world_thunk, 3); duk_put_prop_string(ctx, -2, "create_local_world");
+  duk_push_c_function(ctx, create_world_view_thunk, 3); duk_put_prop_string(ctx, -2, "create_world_view");
+  duk_push_c_function(ctx, create_local_screen_thunk, 4); duk_put_prop_string(ctx, -2, "create_local_screen");
+  duk_push_c_function(ctx, calculate_vertices_thunk, 3); duk_put_prop_string(ctx, -2, "calculate_vertices");
+
+  duk_push_pointer(ctx, object_position); duk_put_prop_string(ctx, -2, "object_position");
+  duk_push_pointer(ctx, object_rotation); duk_put_prop_string(ctx, -2, "object_rotation");
+  duk_push_pointer(ctx, camera_position); duk_put_prop_string(ctx, -2, "camera_position");
+  duk_push_pointer(ctx, camera_rotation); duk_put_prop_string(ctx, -2, "camera_rotation");
+  duk_push_pointer(ctx, local_world); duk_put_prop_string(ctx, -2, "local_world");
+  duk_push_pointer(ctx, world_view); duk_put_prop_string(ctx, -2, "world_view");
+  duk_push_pointer(ctx, local_screen); duk_put_prop_string(ctx, -2, "local_screen");
+  duk_push_pointer(ctx, view_screen); duk_put_prop_string(ctx, -2, "view_screen");
+  duk_push_pointer(ctx, temp_vertices); duk_put_prop_string(ctx, -2, "temp_vertices");
+  duk_push_pointer(ctx, vertices); duk_put_prop_string(ctx, -2, "vertices");
+  duk_push_uint(ctx, vertex_count); duk_put_prop_string(ctx, -2, "vertex_count");
+
+  duk_push_array(ctx);
+  duk_push_pointer(ctx, packets[0]);
+  duk_put_prop_index(ctx, -2, 0);
+  duk_push_pointer(ctx, packets[1]);
+  duk_put_prop_index(ctx, -2, 0);
+  duk_put_prop_string(ctx, -2, "packets");
+
+  duk_put_global_string(ctx, "c");
 
   // Run JavaScript
   if (duk_peval_lstring(ctx, (const char *)javascript, size_javascript) != 0) {
