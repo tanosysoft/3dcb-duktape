@@ -224,6 +224,13 @@ duk_ret_t get_packet_data(duk_context *ctx) {
   return 1;
 }
 
+duk_ret_t memcpy_thunk(duk_context *ctx) {
+  void *dest = duk_is_pointer(ctx, 0) ? duk_get_pointer(ctx, 0) : (void *) duk_get_uint(ctx, 0);
+  void *src = duk_is_pointer(ctx, 1) ? duk_get_pointer(ctx, 1) : (void *) duk_get_uint(ctx, 1);
+  memcpy(dest, src, duk_get_uint(ctx, 2));
+  return 0;
+}
+
 duk_ret_t memwrite_u64(duk_context *ctx) {
   u64 *p = duk_is_pointer(ctx, 0) ? duk_get_pointer(ctx, 0) : (u64 *) duk_get_uint(ctx, 0);
   *(p + duk_get_uint(ctx, 1)) = (u64) duk_get_number(ctx, 2);
@@ -430,6 +437,7 @@ int main(int argc, char **argv) {
   duk_push_c_function(ctx, get_packet_data, 1); duk_put_prop_string(ctx, -2, "get_packet_data");
   duk_push_c_function(ctx, ptradd, 2); duk_put_prop_string(ctx, -2, "ptradd");
   duk_push_c_function(ctx, ptrdiff, 2); duk_put_prop_string(ctx, -2, "ptrdiff");
+  duk_push_c_function(ctx, memcpy_thunk, 2); duk_put_prop_string(ctx, -2, "memcpy");
   duk_push_c_function(ctx, memwrite_u64, 2); duk_put_prop_string(ctx, -2, "memwrite_u64");
   duk_push_c_function(ctx, memread_int, 2); duk_put_prop_string(ctx, -2, "memread_int");
   duk_push_c_function(ctx, draw_model, 1); duk_put_prop_string(ctx, -2, "draw_model");
