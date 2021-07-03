@@ -177,8 +177,8 @@ framebuffer_t frame;
 zbuffer_t z;
 
 duk_ret_t render_prepare() {
-  packets[0] = packet_init(100,PACKET_NORMAL);
-  packets[1] = packet_init(100,PACKET_NORMAL);
+  packets[0] = packet_init(200,PACKET_NORMAL);
+  packets[1] = packet_init(200,PACKET_NORMAL);
 
   // Define the triangle primitive we want to use.
   prim.type = PRIM_TRIANGLE;
@@ -246,7 +246,7 @@ duk_ret_t memread_int(duk_context *ctx) {
 duk_ret_t draw_model(duk_context *ctx) {
   u64 *dw = duk_is_pointer(ctx, 0) ? duk_get_pointer(ctx, 0) : (u64 *) duk_get_uint(ctx, 0);
 
-  for (i = 0; i < 6; i++) {
+  for (i = 0; i < points_count; i++) {
     *dw++ = rgbaq[points[i]].rgbaq;
     *dw++ = st[points[i]].uv;
     *dw++ = xyz[points[i]].xyz;
