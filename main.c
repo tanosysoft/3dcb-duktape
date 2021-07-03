@@ -225,16 +225,16 @@ duk_ret_t get_packet_data(duk_context *ctx) {
 }
 
 duk_ret_t ptradd(duk_context *ctx) {
-  void *p1 = duk_get_pointer(ctx, 0);
-  void *p2 = duk_is_pointer(ctx, 1) ? duk_get_pointer(ctx, 1) : (void *) duk_get_number(ctx, 1);
-  duk_push_pointer(ctx, p1 + p2);
+  size_t p1 = (size_t) duk_get_pointer(ctx, 0);
+  size_t p2 = duk_is_pointer(ctx, 1) ? (size_t) duk_get_pointer(ctx, 1) : duk_get_number(ctx, 1);
+  duk_push_pointer(ctx, (void *) (p1 + p2));
   return 1;
 }
 
 duk_ret_t ptrsub(duk_context *ctx) {
-  void *p1 = duk_get_pointer(ctx, 0);
-  void *p2 = duk_is_pointer(ctx, 1) ? duk_get_pointer(ctx, 1) : (void *) duk_get_number(ctx, 1);
-  duk_push_pointer(ctx, p1 - p2);
+  size_t p1 = (size_t) duk_get_pointer(ctx, 0);
+  size_t p2 = duk_is_pointer(ctx, 1) ? (size_t) duk_get_pointer(ctx, 1) : duk_get_number(ctx, 1);
+  duk_push_pointer(ctx, (void *) (p1 - p2));
   return 1;
 }
 
@@ -355,8 +355,8 @@ duk_ret_t dma_channel_send_normal_thunk(duk_context * ctx) {
   dma_channel_send_normal(_var0, _var1, _var2, _var3, _var4);
   return 0;
 }
-duk_ret_t dma_wait_finish_thunk(duk_context * ctx) {
-  dma_wait_finish();
+duk_ret_t draw_wait_finish_thunk(duk_context * ctx) {
+  draw_wait_finish();
   return 0;
 }
 duk_ret_t graph_wait_vsync_thunk(duk_context * ctx) {
@@ -398,7 +398,7 @@ int main(int argc, char **argv) {
 
   duk_push_object(ctx);
 
-  duk_push_number(ctx, (duk_double_t) DRAW_STQ_REGLIST); duk_put_prop_string(ctx, -2, "DRAW_STQ_REGLIST");
+  duk_push_number(ctx, (duk_double_t) (DRAW_STQ_REGLIST)); duk_put_prop_string(ctx, -2, "DRAW_STQ_REGLIST");
   duk_push_uint(ctx, DMA_CHANNEL_GIF); duk_put_prop_string(ctx, -2, "DMA_CHANNEL_GIF");
 
   duk_push_c_function(ctx, set_vector, 3); duk_put_prop_string(ctx, -2, "set_vector");
@@ -421,7 +421,8 @@ int main(int argc, char **argv) {
   duk_push_c_function(ctx, draw_prim_end_thunk, 3); duk_put_prop_string(ctx, -2, "draw_prim_end");
   duk_push_c_function(ctx, draw_finish_thunk, 1); duk_put_prop_string(ctx, -2, "draw_finish");
   duk_push_c_function(ctx, dma_wait_fast_thunk, 0); duk_put_prop_string(ctx, -2, "dma_wait_fast");
-  duk_push_c_function(ctx, dma_wait_finish_thunk, 0); duk_put_prop_string(ctx, -2, "dma_wait_finish");
+  duk_push_c_function(ctx, dma_channel_send_normal_thunk, 5); duk_put_prop_string(ctx, -2, "dma_channel_send_normal");
+  duk_push_c_function(ctx, draw_wait_finish_thunk, 0); duk_put_prop_string(ctx, -2, "draw_wait_finish");
   duk_push_c_function(ctx, graph_wait_vsync_thunk, 5); duk_put_prop_string(ctx, -2, "graph_wait_vsync");
 
   duk_push_pointer(ctx, object_position); duk_put_prop_string(ctx, -2, "object_position");
