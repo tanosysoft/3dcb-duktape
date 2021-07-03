@@ -310,6 +310,7 @@ duk_ret_t draw_convert_xyz_thunk(duk_context * ctx) {
   unsigned int _var4 = (unsigned int) duk_get_uint(ctx, 4);
   void * _var5 = (void * ) duk_get_pointer(ctx, 5);
   draw_convert_xyz(_var0, _var1, _var2, _var3, _var4, _var5);
+  return 0;
 }
 duk_ret_t draw_convert_rgbq_thunk(duk_context * ctx) {
   void * _var0 = (void * ) duk_get_pointer(ctx, 0);
@@ -318,6 +319,7 @@ duk_ret_t draw_convert_rgbq_thunk(duk_context * ctx) {
   void * _var3 = (void * ) duk_get_pointer(ctx, 3);
   int _var4 = (int) duk_get_int(ctx, 4);
   draw_convert_rgbq(_var0, _var1, _var2, _var3, _var4);
+  return 0;
 }
 duk_ret_t draw_convert_st_thunk(duk_context * ctx) {
   void * _var0 = (void * ) duk_get_pointer(ctx, 0);
@@ -325,6 +327,7 @@ duk_ret_t draw_convert_st_thunk(duk_context * ctx) {
   void * _var2 = (void * ) duk_get_pointer(ctx, 2);
   void * _var3 = (void * ) duk_get_pointer(ctx, 3);
   draw_convert_st(_var0, _var1, _var2, _var3);
+  return 0;
 }
 int main(int argc, char **argv) {
   duk_context *ctx;
