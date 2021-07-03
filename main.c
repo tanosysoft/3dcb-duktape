@@ -217,10 +217,6 @@ duk_ret_t render_prepare() {
 duk_ret_t render_frame() {
   current = packets[context];
 
-  // Spin the cube a bit.
-  object_rotation[0] += 0.008f; while (object_rotation[0] > 3.14f) { object_rotation[0] -= 6.28f; }
-  object_rotation[1] += 0.012f; while (object_rotation[1] > 3.14f) { object_rotation[1] -= 6.28f; }
-
   // Create the local_world matrix.
   create_local_world(local_world, object_position, object_rotation);
 
@@ -316,6 +312,9 @@ int main(int argc, char **argv) {
 
   duk_push_c_function(ctx, set_vector, 3);
   duk_put_prop_string(ctx, -2, "set_vector");
+
+  duk_push_pointer(ctx, object_rotation);
+  duk_put_prop_string(ctx, -2, "object_rotation");
 
   duk_push_array(ctx);
   duk_push_pointer(ctx, packets[0]);
