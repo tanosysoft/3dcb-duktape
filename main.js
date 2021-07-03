@@ -18,26 +18,20 @@ while(true) {
   c.draw_convert_st(c.st, c.vertex_count, c.temp_vertices, c.coordinates);
 
   current = c.packets[context];
-  context ^= 1;
   q_start = q = c.get_packet_data(current);
 
   // Clear framebuffer but don't update zbuffer.
   q = c.draw_disable_tests(q, 0, c.z);
-  q = c.draw_clear(q, 0, 2048 - 320, 2048 - 256, 640, 448, 0x40, 0x40, 0x40);
+  q = c.draw_clear(q, 0, 2048 - 320, 2048 - 256, 640, 448, 0x70, 0x40, 0x70);
   q = c.draw_enable_tests(q, 0, c.z);
 
   // Draw the triangles using triangle primitive type.
   // Use a 64-bit pointer to simplify adding data to the packet.
   dw = c.draw_prim_start(q, 0, c.prim, c.color);
-
-  for (i = 0; i < c.points_count; i++) {
-    c.memwrite_u64(dw, 0, c.ptradd(c.rgbaq, 8 * c.memread_int(c.points, i))); dw += 8;
-    c.memwrite_u64(dw, 0, c.ptradd(c.st, 8 * c.memread_int(c.points, i))); dw += 8;
-    c.memwrite_u64(dw, 0, c.ptradd(c.xyz, 8 * c.memread_int(c.points, i))); dw += 8;
-  }
+  dw = c.draw_model(dw);
 
   // Check if we're in middle of a qword or not.
-  if (dw % 16) { memwrite_u64(dw, 0); dw += 8 }
+  if ((dw|0) % 16) { c.memwrite_u64(dw, 0); dw += 8 }
 
   // Only 3 registers rgbaq/st/xyz were used (standard STQ reglist)
   q = c.draw_prim_end(dw, 3, c.DRAW_STQ_REGLIST);
@@ -47,13 +41,17 @@ while(true) {
 
   // Now send our current dma chain.
   c.dma_wait_fast();
-  c.dma_channel_send_normal(c.DMA_CHANNEL_GIF, q_start, c.ptrsub(q, q_start), 0, 0);
+  console.log(c.DMA_CHANNEL_GIF, c.ptrdiff(q, q_start) / 8);
+  c.dma_channel_send_normal(c.DMA_CHANNEL_GIF, q_start, c.ptrdiff(q, q_start) / 8, 0, 0);
+  console.log('dma sent');
 
   // Now switch our packets so we can process data while the DMAC is working.
   context ^= 1;
 
   // Wait for scene to finish drawing
   c.draw_wait_finish();
+  console.log('draw finished');
 
   c.graph_wait_vsync();
+  console.log('vsync waited');
 }

@@ -236,17 +236,30 @@ duk_ret_t memread_int(duk_context *ctx) {
   return 1;
 }
 
+duk_ret_t draw_model(duk_context *ctx) {
+  u64 *dw = duk_is_pointer(ctx, 0) ? duk_get_pointer(ctx, 0) : (u64 *) duk_get_uint(ctx, 0);
+
+  for (i = 0; i < 6; i++) {
+    *dw++ = rgbaq[points[i]].rgbaq;
+    *dw++ = st[points[i]].uv;
+    *dw++ = xyz[points[i]].xyz;
+  }
+
+  duk_push_uint(ctx, (unsigned int) dw);
+  return 1;
+}
+
 duk_ret_t ptradd(duk_context *ctx) {
   size_t p1 = (size_t) duk_get_pointer(ctx, 0);
-  size_t p2 = duk_is_pointer(ctx, 1) ? (size_t) duk_get_pointer(ctx, 1) : duk_get_number(ctx, 1);
+  size_t p2 = duk_is_pointer(ctx, 1) ? (size_t) duk_get_pointer(ctx, 1) : duk_get_uint(ctx, 1);
   duk_push_pointer(ctx, (void *) (p1 + p2));
   return 1;
 }
 
-duk_ret_t ptrsub(duk_context *ctx) {
+duk_ret_t ptrdiff(duk_context *ctx) {
   size_t p1 = (size_t) duk_get_pointer(ctx, 0);
-  size_t p2 = duk_is_pointer(ctx, 1) ? (size_t) duk_get_pointer(ctx, 1) : duk_get_number(ctx, 1);
-  duk_push_pointer(ctx, (void *) (p1 - p2));
+  size_t p2 = duk_is_pointer(ctx, 1) ? (size_t) duk_get_pointer(ctx, 1) : duk_get_uint(ctx, 1);
+  duk_push_uint(ctx, p1 > p2 ? p1 - p2 : p2 - p1);
   return 1;
 }
 
@@ -311,15 +324,15 @@ duk_ret_t draw_disable_tests_thunk(duk_context * ctx) {
   qword_t * _var0 = (qword_t * ) duk_get_pointer(ctx, 0);
   int _var1 = (int) duk_get_int(ctx, 1);
   zbuffer_t * _var2 = (zbuffer_t * ) duk_get_pointer(ctx, 2);
-  draw_disable_tests(_var0, _var1, _var2);
-  return 0;
+  duk_push_pointer(ctx, draw_disable_tests(_var0, _var1, _var2));
+  return 1;
 }
 duk_ret_t draw_enable_tests_thunk(duk_context * ctx) {
   qword_t * _var0 = (qword_t * ) duk_get_pointer(ctx, 0);
   int _var1 = (int) duk_get_int(ctx, 1);
   zbuffer_t * _var2 = (zbuffer_t * ) duk_get_pointer(ctx, 2);
-  draw_enable_tests(_var0, _var1, _var2);
-  return 0;
+  duk_push_pointer(ctx, draw_enable_tests(_var0, _var1, _var2));
+  return 1;
 }
 duk_ret_t draw_clear_thunk(duk_context * ctx) {
   qword_t * _var0 = (qword_t * ) duk_get_pointer(ctx, 0);
@@ -331,8 +344,8 @@ duk_ret_t draw_clear_thunk(duk_context * ctx) {
   int _var6 = (int) duk_get_int(ctx, 6);
   int _var7 = (int) duk_get_int(ctx, 7);
   int _var8 = (int) duk_get_int(ctx, 8);
-  draw_clear(_var0, _var1, _var2, _var3, _var4, _var5, _var6, _var7, _var8);
-  return 0;
+  duk_push_pointer(ctx, draw_clear(_var0, _var1, _var2, _var3, _var4, _var5, _var6, _var7, _var8));
+  return 1;
 }
 duk_ret_t draw_prim_start_thunk(duk_context * ctx) {
   qword_t * _var0 = (qword_t * ) duk_get_pointer(ctx, 0);
@@ -343,7 +356,7 @@ duk_ret_t draw_prim_start_thunk(duk_context * ctx) {
   return 1;
 }
 duk_ret_t draw_prim_end_thunk(duk_context * ctx) {
-  qword_t * _var0 = (qword_t * ) duk_get_pointer(ctx, 0);
+  qword_t * _var0 = duk_is_pointer(ctx, 0) ? (qword_t * ) duk_get_pointer(ctx, 0) : (qword_t *) duk_get_uint(ctx, 0);
   int _var1 = (int) duk_get_int(ctx, 1);
   u64 _var2 = (u64) duk_get_number(ctx, 2);
   duk_push_pointer(ctx, draw_prim_end(_var0, _var1, _var2));
@@ -416,14 +429,15 @@ int main(int argc, char **argv) {
   duk_push_c_function(ctx, set_vector, 3); duk_put_prop_string(ctx, -2, "set_vector");
   duk_push_c_function(ctx, get_packet_data, 1); duk_put_prop_string(ctx, -2, "get_packet_data");
   duk_push_c_function(ctx, ptradd, 2); duk_put_prop_string(ctx, -2, "ptradd");
-  duk_push_c_function(ctx, ptrsub, 2); duk_put_prop_string(ctx, -2, "ptrsub");
+  duk_push_c_function(ctx, ptrdiff, 2); duk_put_prop_string(ctx, -2, "ptrdiff");
   duk_push_c_function(ctx, memwrite_u64, 2); duk_put_prop_string(ctx, -2, "memwrite_u64");
   duk_push_c_function(ctx, memread_int, 2); duk_put_prop_string(ctx, -2, "memread_int");
+  duk_push_c_function(ctx, draw_model, 1); duk_put_prop_string(ctx, -2, "draw_model");
 
   duk_push_c_function(ctx, create_local_world_thunk, 3); duk_put_prop_string(ctx, -2, "create_local_world");
   duk_push_c_function(ctx, create_world_view_thunk, 3); duk_put_prop_string(ctx, -2, "create_world_view");
   duk_push_c_function(ctx, create_local_screen_thunk, 4); duk_put_prop_string(ctx, -2, "create_local_screen");
-  duk_push_c_function(ctx, calculate_vertices_thunk, 3); duk_put_prop_string(ctx, -2, "calculate_vertices");
+  duk_push_c_function(ctx, calculate_vertices_thunk, 4); duk_put_prop_string(ctx, -2, "calculate_vertices");
   duk_push_c_function(ctx, draw_convert_xyz_thunk, 6); duk_put_prop_string(ctx, -2, "draw_convert_xyz");
   duk_push_c_function(ctx, draw_convert_rgbq_thunk, 5); duk_put_prop_string(ctx, -2, "draw_convert_rgbq");
   duk_push_c_function(ctx, draw_convert_st_thunk, 4); duk_put_prop_string(ctx, -2, "draw_convert_st");
@@ -439,33 +453,31 @@ int main(int argc, char **argv) {
   duk_push_c_function(ctx, draw_wait_finish_thunk, 0); duk_put_prop_string(ctx, -2, "draw_wait_finish");
   duk_push_c_function(ctx, graph_wait_vsync_thunk, 5); duk_put_prop_string(ctx, -2, "graph_wait_vsync");
 
-  duk_push_pointer(ctx, object_position); duk_put_prop_string(ctx, -2, "object_position");
-  duk_push_pointer(ctx, object_rotation); duk_put_prop_string(ctx, -2, "object_rotation");
-  duk_push_pointer(ctx, camera_position); duk_put_prop_string(ctx, -2, "camera_position");
-  duk_push_pointer(ctx, camera_rotation); duk_put_prop_string(ctx, -2, "camera_rotation");
-  duk_push_pointer(ctx, local_world); duk_put_prop_string(ctx, -2, "local_world");
-  duk_push_pointer(ctx, world_view); duk_put_prop_string(ctx, -2, "world_view");
-  duk_push_pointer(ctx, local_screen); duk_put_prop_string(ctx, -2, "local_screen");
-  duk_push_pointer(ctx, view_screen); duk_put_prop_string(ctx, -2, "view_screen");
+  duk_push_pointer(ctx, &object_position[0]); duk_put_prop_string(ctx, -2, "object_position");
+  duk_push_pointer(ctx, &object_rotation[0]); duk_put_prop_string(ctx, -2, "object_rotation");
+  duk_push_pointer(ctx, &camera_position[0]); duk_put_prop_string(ctx, -2, "camera_position");
+  duk_push_pointer(ctx, &camera_rotation[0]); duk_put_prop_string(ctx, -2, "camera_rotation");
+  duk_push_pointer(ctx, &local_world[0]); duk_put_prop_string(ctx, -2, "local_world");
+  duk_push_pointer(ctx, &world_view[0]); duk_put_prop_string(ctx, -2, "world_view");
+  duk_push_pointer(ctx, &local_screen[0]); duk_put_prop_string(ctx, -2, "local_screen");
+  duk_push_pointer(ctx, &view_screen[0]); duk_put_prop_string(ctx, -2, "view_screen");
   duk_push_pointer(ctx, temp_vertices); duk_put_prop_string(ctx, -2, "temp_vertices");
-  duk_push_pointer(ctx, points); duk_put_prop_string(ctx, -2, "points");
-  duk_push_uint(ctx, points_count); duk_put_prop_string(ctx, -2, "points_count");
-  duk_push_pointer(ctx, vertices); duk_put_prop_string(ctx, -2, "vertices");
+  duk_push_pointer(ctx, &points[0]); duk_put_prop_string(ctx, -2, "points");
+  duk_push_int(ctx, points_count); duk_put_prop_string(ctx, -2, "points_count");
+  duk_push_pointer(ctx, &vertices[0]); duk_put_prop_string(ctx, -2, "vertices");
   duk_push_uint(ctx, vertex_count); duk_put_prop_string(ctx, -2, "vertex_count");
   duk_push_pointer(ctx, xyz); duk_put_prop_string(ctx, -2, "xyz");
   duk_push_pointer(ctx, rgbaq); duk_put_prop_string(ctx, -2, "rgbaq");
-  duk_push_pointer(ctx, colours); duk_put_prop_string(ctx, -2, "colours");
+  duk_push_pointer(ctx, &colours[0]); duk_put_prop_string(ctx, -2, "colours");
   duk_push_pointer(ctx, st); duk_put_prop_string(ctx, -2, "st");
-  duk_push_pointer(ctx, coordinates); duk_put_prop_string(ctx, -2, "coordinates");
+  duk_push_pointer(ctx, &coordinates[0]); duk_put_prop_string(ctx, -2, "coordinates");
   duk_push_pointer(ctx, &prim); duk_put_prop_string(ctx, -2, "prim");
   duk_push_pointer(ctx, &color); duk_put_prop_string(ctx, -2, "color");
   duk_push_pointer(ctx, &z); duk_put_prop_string(ctx, -2, "z");
 
   duk_push_array(ctx);
-  duk_push_pointer(ctx, packets[0]);
-  duk_put_prop_index(ctx, -2, 0);
-  duk_push_pointer(ctx, packets[1]);
-  duk_put_prop_index(ctx, -2, 0);
+  duk_push_pointer(ctx, packets[0]); duk_put_prop_index(ctx, -2, 0);
+  duk_push_pointer(ctx, packets[1]); duk_put_prop_index(ctx, -2, 1);
   duk_put_prop_string(ctx, -2, "packets");
 
   duk_put_global_string(ctx, "c");
