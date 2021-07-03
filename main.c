@@ -158,10 +158,6 @@ int i;
 int context = 0;
 
 packet_t *packets[2];
-packet_t *current;
-
-qword_t *q;
-u64 *dw;
 
 MATRIX local_world;
 MATRIX world_view;
@@ -214,62 +210,32 @@ duk_ret_t render_prepare() {
   return 0;
 }
 
-duk_ret_t render_frame() {
-  current = packets[context];
-
-  q = current->data;
-
-  // Clear framebuffer but don't update zbuffer.
-  q = draw_disable_tests(q,0,&z);
-  q = draw_clear(q,0,2048.0f-320.0f,2048.0f-256.0f,frame.width,frame.height,0x40,0x40,0x40);
-  q = draw_enable_tests(q,0,&z);
-
-  // Draw the triangles using triangle primitive type.
-  // Use a 64-bit pointer to simplify adding data to the packet.
-  dw = (u64*)draw_prim_start(q,0,&prim, &color);
-
-  for(i = 0; i < points_count; i++)
-  {
-    *dw++ = rgbaq[points[i]].rgbaq;
-    *dw++ = st[points[i]].uv;
-    *dw++ = xyz[points[i]].xyz;
-  }
-
-  // Check if we're in middle of a qword or not.
-  if ((u32)dw % 16)
-  {
-
-    *dw++ = 0;
-
-  }
-
-  // Only 3 registers rgbaq/st/xyz were used (standard STQ reglist)
-  q = draw_prim_end((qword_t*)dw,3,DRAW_STQ_REGLIST);
-
-  // Setup a finish event.
-  q = draw_finish(q);
-
-  // Now send our current dma chain.
-  dma_wait_fast();
-  dma_channel_send_normal(DMA_CHANNEL_GIF,current->data, q - current->data, 0, 0);
-
-  // Now switch our packets so we can process data while the DMAC is working.
-  context ^= 1;
-
-  // Wait for scene to finish drawing
-  draw_wait_finish();
-
-  graph_wait_vsync();
-
-  return 0;
-}
-
 duk_ret_t set_vector(duk_context *ctx) {
   VECTOR *v = duk_get_pointer(ctx, 0);
   int i = (int) duk_get_number(ctx, 1);
   float x = (float) duk_get_number(ctx, 2);
   (*v)[i] = x;
   return 0;
+}
+
+duk_ret_t get_packet_data(duk_context *ctx) {
+  packet_t *p = (packet_t *) duk_get_pointer(ctx, 0);
+  duk_push_pointer(ctx, p->data);
+  return 1;
+}
+
+duk_ret_t ptradd(duk_context *ctx) {
+  void *p1 = duk_get_pointer(ctx, 0);
+  void *p2 = duk_is_pointer(ctx, 1) ? duk_get_pointer(ctx, 1) : (void *) duk_get_number(ctx, 1);
+  duk_push_pointer(ctx, p1 + p2);
+  return 1;
+}
+
+duk_ret_t ptrsub(duk_context *ctx) {
+  void *p1 = duk_get_pointer(ctx, 0);
+  void *p2 = duk_is_pointer(ctx, 1) ? duk_get_pointer(ctx, 1) : (void *) duk_get_number(ctx, 1);
+  duk_push_pointer(ctx, p1 - p2);
+  return 1;
 }
 
 duk_ret_t create_local_world_thunk(duk_context * ctx) {
@@ -329,6 +295,75 @@ duk_ret_t draw_convert_st_thunk(duk_context * ctx) {
   draw_convert_st(_var0, _var1, _var2, _var3);
   return 0;
 }
+duk_ret_t draw_disable_tests_thunk(duk_context * ctx) {
+  qword_t * _var0 = (qword_t * ) duk_get_pointer(ctx, 0);
+  int _var1 = (int) duk_get_int(ctx, 1);
+  zbuffer_t * _var2 = (zbuffer_t * ) duk_get_pointer(ctx, 2);
+  draw_disable_tests(_var0, _var1, _var2);
+  return 0;
+}
+duk_ret_t draw_enable_tests_thunk(duk_context * ctx) {
+  qword_t * _var0 = (qword_t * ) duk_get_pointer(ctx, 0);
+  int _var1 = (int) duk_get_int(ctx, 1);
+  zbuffer_t * _var2 = (zbuffer_t * ) duk_get_pointer(ctx, 2);
+  draw_enable_tests(_var0, _var1, _var2);
+  return 0;
+}
+duk_ret_t draw_clear_thunk(duk_context * ctx) {
+  qword_t * _var0 = (qword_t * ) duk_get_pointer(ctx, 0);
+  int _var1 = (int) duk_get_int(ctx, 1);
+  float _var2 = (float) duk_get_number(ctx, 2);
+  float _var3 = (float) duk_get_number(ctx, 3);
+  float _var4 = (float) duk_get_number(ctx, 4);
+  float _var5 = (float) duk_get_number(ctx, 5);
+  int _var6 = (int) duk_get_int(ctx, 6);
+  int _var7 = (int) duk_get_int(ctx, 7);
+  int _var8 = (int) duk_get_int(ctx, 8);
+  draw_clear(_var0, _var1, _var2, _var3, _var4, _var5, _var6, _var7, _var8);
+  return 0;
+}
+duk_ret_t draw_prim_start_thunk(duk_context * ctx) {
+  qword_t * _var0 = (qword_t * ) duk_get_pointer(ctx, 0);
+  int _var1 = (int) duk_get_int(ctx, 1);
+  prim_t * _var2 = (prim_t * ) duk_get_pointer(ctx, 2);
+  color_t * _var3 = (color_t * ) duk_get_pointer(ctx, 3);
+  draw_prim_start(_var0, _var1, _var2, _var3);
+  return 0;
+}
+duk_ret_t draw_prim_end_thunk(duk_context * ctx) {
+  qword_t * _var0 = (qword_t * ) duk_get_pointer(ctx, 0);
+  int _var1 = (int) duk_get_int(ctx, 1);
+  u64 _var2 = (u64) duk_get_number(ctx, 2);
+  draw_prim_end(_var0, _var1, _var2);
+  return 0;
+}
+duk_ret_t draw_finish_thunk(duk_context * ctx) {
+  qword_t * _var0 = (qword_t * ) duk_get_pointer(ctx, 0);
+  draw_finish(_var0);
+  return 0;
+}
+duk_ret_t dma_wait_fast_thunk(duk_context * ctx) {
+  dma_wait_fast();
+  return 0;
+}
+duk_ret_t dma_channel_send_normal_thunk(duk_context * ctx) {
+  int _var0 = (int) duk_get_int(ctx, 0);
+  void * _var1 = (void * ) duk_get_pointer(ctx, 1);
+  int _var2 = (int) duk_get_int(ctx, 2);
+  int _var3 = (int) duk_get_int(ctx, 3);
+  int _var4 = (int) duk_get_int(ctx, 4);
+  dma_channel_send_normal(_var0, _var1, _var2, _var3, _var4);
+  return 0;
+}
+duk_ret_t dma_wait_finish_thunk(duk_context * ctx) {
+  dma_wait_finish();
+  return 0;
+}
+duk_ret_t graph_wait_vsync_thunk(duk_context * ctx) {
+  graph_wait_vsync();
+  return 0;
+}
+
 int main(int argc, char **argv) {
   duk_context *ctx;
 
@@ -363,8 +398,14 @@ int main(int argc, char **argv) {
 
   duk_push_object(ctx);
 
-  duk_push_c_function(ctx, render_frame, 0); duk_put_prop_string(ctx, -2, "render_frame");
+  duk_push_number(ctx, (duk_double_t) DRAW_STQ_REGLIST); duk_put_prop_string(ctx, -2, "DRAW_STQ_REGLIST");
+  duk_push_uint(ctx, DMA_CHANNEL_GIF); duk_put_prop_string(ctx, -2, "DMA_CHANNEL_GIF");
+
   duk_push_c_function(ctx, set_vector, 3); duk_put_prop_string(ctx, -2, "set_vector");
+  duk_push_c_function(ctx, get_packet_data, 1); duk_put_prop_string(ctx, -2, "get_packet_data");
+  duk_push_c_function(ctx, ptradd, 2); duk_put_prop_string(ctx, -2, "ptradd");
+  duk_push_c_function(ctx, ptrsub, 2); duk_put_prop_string(ctx, -2, "ptrsub");
+
   duk_push_c_function(ctx, create_local_world_thunk, 3); duk_put_prop_string(ctx, -2, "create_local_world");
   duk_push_c_function(ctx, create_world_view_thunk, 3); duk_put_prop_string(ctx, -2, "create_world_view");
   duk_push_c_function(ctx, create_local_screen_thunk, 4); duk_put_prop_string(ctx, -2, "create_local_screen");
@@ -372,6 +413,16 @@ int main(int argc, char **argv) {
   duk_push_c_function(ctx, draw_convert_xyz_thunk, 6); duk_put_prop_string(ctx, -2, "draw_convert_xyz");
   duk_push_c_function(ctx, draw_convert_rgbq_thunk, 5); duk_put_prop_string(ctx, -2, "draw_convert_rgbq");
   duk_push_c_function(ctx, draw_convert_st_thunk, 4); duk_put_prop_string(ctx, -2, "draw_convert_st");
+
+  duk_push_c_function(ctx, draw_disable_tests_thunk, 3); duk_put_prop_string(ctx, -2, "draw_disable_tests");
+  duk_push_c_function(ctx, draw_enable_tests_thunk, 3); duk_put_prop_string(ctx, -2, "draw_enable_tests");
+  duk_push_c_function(ctx, draw_clear_thunk, 9); duk_put_prop_string(ctx, -2, "draw_clear");
+  duk_push_c_function(ctx, draw_prim_start_thunk, 5); duk_put_prop_string(ctx, -2, "draw_prim_start");
+  duk_push_c_function(ctx, draw_prim_end_thunk, 3); duk_put_prop_string(ctx, -2, "draw_prim_end");
+  duk_push_c_function(ctx, draw_finish_thunk, 1); duk_put_prop_string(ctx, -2, "draw_finish");
+  duk_push_c_function(ctx, dma_wait_fast_thunk, 0); duk_put_prop_string(ctx, -2, "dma_wait_fast");
+  duk_push_c_function(ctx, dma_wait_finish_thunk, 0); duk_put_prop_string(ctx, -2, "dma_wait_finish");
+  duk_push_c_function(ctx, graph_wait_vsync_thunk, 5); duk_put_prop_string(ctx, -2, "graph_wait_vsync");
 
   duk_push_pointer(ctx, object_position); duk_put_prop_string(ctx, -2, "object_position");
   duk_push_pointer(ctx, object_rotation); duk_put_prop_string(ctx, -2, "object_rotation");
