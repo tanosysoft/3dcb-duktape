@@ -224,6 +224,18 @@ duk_ret_t get_packet_data(duk_context *ctx) {
   return 1;
 }
 
+duk_ret_t memwrite_u64(duk_context *ctx) {
+  void *p = duk_is_pointer(ctx, 0) ? duk_get_pointer(ctx, 0) : (void *) duk_get_number(ctx, 0);
+  *(p + duk_get_uint(ctx, 1)) = (u64) duk_get_number(ctx, 2);
+  return 0;
+}
+
+duk_ret_t memread_int(duk_context *ctx) {
+  int *p = duk_is_pointer(ctx, 0) ? duk_get_pointer(ctx, 0) : (int *) duk_get_number(ctx, 0);
+  duk_push_int(ctx, *(p + duk_get_uint(ctx, 1)));
+  return 1;
+}
+
 duk_ret_t ptradd(duk_context *ctx) {
   size_t p1 = (size_t) duk_get_pointer(ctx, 0);
   size_t p2 = duk_is_pointer(ctx, 1) ? (size_t) duk_get_pointer(ctx, 1) : duk_get_number(ctx, 1);
@@ -327,20 +339,20 @@ duk_ret_t draw_prim_start_thunk(duk_context * ctx) {
   int _var1 = (int) duk_get_int(ctx, 1);
   prim_t * _var2 = (prim_t * ) duk_get_pointer(ctx, 2);
   color_t * _var3 = (color_t * ) duk_get_pointer(ctx, 3);
-  draw_prim_start(_var0, _var1, _var2, _var3);
-  return 0;
+  duk_push_uint(ctx, (unsigned int) draw_prim_start(_var0, _var1, _var2, _var3));
+  return 1;
 }
 duk_ret_t draw_prim_end_thunk(duk_context * ctx) {
   qword_t * _var0 = (qword_t * ) duk_get_pointer(ctx, 0);
   int _var1 = (int) duk_get_int(ctx, 1);
   u64 _var2 = (u64) duk_get_number(ctx, 2);
-  draw_prim_end(_var0, _var1, _var2);
-  return 0;
+  duk_push_pointer(ctx, draw_prim_end(_var0, _var1, _var2));
+  return 1;
 }
 duk_ret_t draw_finish_thunk(duk_context * ctx) {
   qword_t * _var0 = (qword_t * ) duk_get_pointer(ctx, 0);
-  draw_finish(_var0);
-  return 0;
+  duk_push_pointer(ctx, draw_finish(_var0));
+  return 1;
 }
 duk_ret_t dma_wait_fast_thunk(duk_context * ctx) {
   dma_wait_fast();

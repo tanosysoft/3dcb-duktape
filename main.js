@@ -30,11 +30,11 @@ while(true) {
   // Use a 64-bit pointer to simplify adding data to the packet.
   dw = c.draw_prim_start(q, 0, c.prim, c.color);
 
-  //for (i = 0; i < c.points_count; i++) {
-    //c.memwrite_u64(dw, c.ptradd(c.rgbaq, 8 * c.memread_int(c.points, i))); dw += 8;
-    //c.memwrite_u64(dw, c.ptradd(c.st, 8 * c.memread_int(c.points, i))); dw += 8;
-    //c.memwrite_u64(dw, c.ptradd(c.xyz, 8 * c.memread_int(c.points, i))); dw += 8;
-  //}
+  for (i = 0; i < c.points_count; i++) {
+    c.memwrite_u64(dw, 0, c.ptradd(c.rgbaq, 8 * c.memread_int(c.points, i))); dw += 8;
+    c.memwrite_u64(dw, 0, c.ptradd(c.st, 8 * c.memread_int(c.points, i))); dw += 8;
+    c.memwrite_u64(dw, 0, c.ptradd(c.xyz, 8 * c.memread_int(c.points, i))); dw += 8;
+  }
 
   // Check if we're in middle of a qword or not.
   //if (dw % 16) { memwrite_u64(dw, 0); dw += 8 }
