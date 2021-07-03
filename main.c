@@ -316,7 +316,8 @@ duk_ret_t draw_convert_rgbq_thunk(duk_context * ctx) {
   unsigned int _var1 = (unsigned int) duk_get_uint(ctx, 1);
   void * _var2 = (void * ) duk_get_pointer(ctx, 2);
   void * _var3 = (void * ) duk_get_pointer(ctx, 3);
-  draw_convert_rgbq(_var0, _var1, _var2, _var3);
+  int _var4 = (int) duk_get_int(ctx, 4);
+  draw_convert_rgbq(_var0, _var1, _var2, _var3, _var4);
 }
 duk_ret_t draw_convert_st_thunk(duk_context * ctx) {
   void * _var0 = (void * ) duk_get_pointer(ctx, 0);
@@ -325,7 +326,6 @@ duk_ret_t draw_convert_st_thunk(duk_context * ctx) {
   void * _var3 = (void * ) duk_get_pointer(ctx, 3);
   draw_convert_st(_var0, _var1, _var2, _var3);
 }
-
 int main(int argc, char **argv) {
   duk_context *ctx;
 
@@ -367,7 +367,7 @@ int main(int argc, char **argv) {
   duk_push_c_function(ctx, create_local_screen_thunk, 4); duk_put_prop_string(ctx, -2, "create_local_screen");
   duk_push_c_function(ctx, calculate_vertices_thunk, 3); duk_put_prop_string(ctx, -2, "calculate_vertices");
   duk_push_c_function(ctx, draw_convert_xyz_thunk, 6); duk_put_prop_string(ctx, -2, "draw_convert_xyz");
-  duk_push_c_function(ctx, draw_convert_rgbq_thunk, 4); duk_put_prop_string(ctx, -2, "draw_convert_rgbq");
+  duk_push_c_function(ctx, draw_convert_rgbq_thunk, 5); duk_put_prop_string(ctx, -2, "draw_convert_rgbq");
   duk_push_c_function(ctx, draw_convert_st_thunk, 4); duk_put_prop_string(ctx, -2, "draw_convert_st");
 
   duk_push_pointer(ctx, object_position); duk_put_prop_string(ctx, -2, "object_position");
