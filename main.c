@@ -217,18 +217,6 @@ duk_ret_t render_prepare() {
 duk_ret_t render_frame() {
   current = packets[context];
 
-  // Create the local_world matrix.
-  create_local_world(local_world, object_position, object_rotation);
-
-  // Create the world_view matrix.
-  create_world_view(world_view, camera_position, camera_rotation);
-
-  // Create the local_screen matrix.
-  create_local_screen(local_screen, local_world, world_view, view_screen);
-
-  // Calculate the vertex values.
-  calculate_vertices(temp_vertices, vertex_count, vertices, local_screen);
-
   // Generate the XYZ register values.
   draw_convert_xyz(xyz, 2048, 2048, 32, vertex_count, (vertex_f_t*)temp_vertices);
 
@@ -293,6 +281,37 @@ duk_ret_t set_vector(duk_context *ctx) {
   return 0;
 }
 
+duk_ret_t create_local_world_thunk(duk_context * ctx) {
+  void * _var0 = (void * ) duk_get_pointer(ctx, 0);
+  void * _var1 = (void * ) duk_get_pointer(ctx, 1);
+  void * _var2 = (void * ) duk_get_pointer(ctx, 2);
+  create_local_world(_var0, _var1, _var2);
+  return 0;
+}
+duk_ret_t create_world_view_thunk(duk_context * ctx) {
+  void * _var0 = (void * ) duk_get_pointer(ctx, 0);
+  void * _var1 = (void * ) duk_get_pointer(ctx, 1);
+  void * _var2 = (void * ) duk_get_pointer(ctx, 2);
+  create_world_view(_var0, _var1, _var2);
+  return 0;
+}
+duk_ret_t create_local_screen_thunk(duk_context * ctx) {
+  void * _var0 = (void * ) duk_get_pointer(ctx, 0);
+  void * _var1 = (void * ) duk_get_pointer(ctx, 1);
+  void * _var2 = (void * ) duk_get_pointer(ctx, 2);
+  void * _var3 = (void * ) duk_get_pointer(ctx, 3);
+  create_local_screen(_var0, _var1, _var2, _var3);
+  return 0;
+}
+duk_ret_t calculate_vertices_thunk(duk_context * ctx) {
+  void * _var0 = (void * ) duk_get_pointer(ctx, 0);
+  unsigned int _var1 = (unsigned int) duk_get_uint(ctx, 1);
+  void * _var2 = (void * ) duk_get_pointer(ctx, 2);
+  void * _var3 = (void * ) duk_get_pointer(ctx, 3);
+  calculate_vertices(_var0, _var1, _var2, _var3);
+  return 0;
+}
+
 int main(int argc, char **argv) {
   duk_context *ctx;
 
@@ -304,17 +323,26 @@ int main(int argc, char **argv) {
 
   duk_push_object(ctx);
 
-  duk_push_c_function(ctx, render_prepare, 0);
-  duk_put_prop_string(ctx, -2, "render_prepare");
+  duk_push_c_function(ctx, render_prepare, 0); duk_put_prop_string(ctx, -2, "render_prepare");
+  duk_push_c_function(ctx, render_frame, 0); duk_put_prop_string(ctx, -2, "render_frame");
+  duk_push_c_function(ctx, set_vector, 3); duk_put_prop_string(ctx, -2, "set_vector");
+  duk_push_c_function(ctx, create_local_world_thunk, 3); duk_put_prop_string(ctx, -2, "create_local_world_thunk");
+  duk_push_c_function(ctx, create_world_view_thunk, 3); duk_put_prop_string(ctx, -2, "create_world_view_thunk");
+  duk_push_c_function(ctx, create_local_screen, 4); duk_put_prop_string(ctx, -2, "create_local_screen");
+  duk_push_c_function(ctx, calculate_vertices, 3); duk_put_prop_string(ctx, -2, "calculate_vertices");
 
-  duk_push_c_function(ctx, render_frame, 0);
-  duk_put_prop_string(ctx, -2, "render_frame");
-
-  duk_push_c_function(ctx, set_vector, 3);
-  duk_put_prop_string(ctx, -2, "set_vector");
-
-  duk_push_pointer(ctx, object_rotation);
-  duk_put_prop_string(ctx, -2, "object_rotation");
+  duk_push_pointer(ctx, object_position); duk_put_prop_string(ctx, -2, "object_position");
+  duk_push_pointer(ctx, object_rotation); duk_put_prop_string(ctx, -2, "object_rotation");
+  duk_push_pointer(ctx, camera_position); duk_put_prop_string(ctx, -2, "camera_position");
+  duk_push_pointer(ctx, camera_rotation); duk_put_prop_string(ctx, -2, "camera_rotation");
+  duk_push_pointer(ctx, local_world); duk_put_prop_string(ctx, -2, "local_world");
+  duk_push_pointer(ctx, world_view); duk_put_prop_string(ctx, -2, "world_view");
+  duk_push_pointer(ctx, local_screen); duk_put_prop_string(ctx, -2, "local_screen");
+  duk_push_pointer(ctx, local_world); duk_put_prop_string(ctx, -2, "local_world");
+  duk_push_pointer(ctx, view_screen); duk_put_prop_string(ctx, -2, "view_screen");
+  duk_push_pointer(ctx, temp_vertices); duk_put_prop_string(ctx, -2, "temp_vertices");
+  duk_push_pointer(ctx, vertices); duk_put_prop_string(ctx, -2, "vertices");
+  duk_push_uint(ctx, vertex_count); duk_put_prop_string(ctx, -2, "vertex_count");
 
   duk_push_array(ctx);
   duk_push_pointer(ctx, packets[0]);
