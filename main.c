@@ -217,15 +217,6 @@ duk_ret_t render_prepare() {
 duk_ret_t render_frame() {
   current = packets[context];
 
-  // Generate the XYZ register values.
-  draw_convert_xyz(xyz, 2048, 2048, 32, vertex_count, (vertex_f_t*)temp_vertices);
-
-  // Convert floating point colours to fixed point.
-  draw_convert_rgbq(rgbaq, vertex_count, (vertex_f_t*)temp_vertices, (color_f_t*)colours,color.a);
-
-  // Generate the ST register values.
-  draw_convert_st(st, vertex_count, (vertex_f_t*)temp_vertices, (texel_f_t*)coordinates);
-
   q = current->data;
 
   // Clear framebuffer but don't update zbuffer.
@@ -311,6 +302,29 @@ duk_ret_t calculate_vertices_thunk(duk_context * ctx) {
   calculate_vertices(_var0, _var1, _var2, _var3);
   return 0;
 }
+duk_ret_t draw_convert_xyz_thunk(duk_context * ctx) {
+  void * _var0 = (void * ) duk_get_pointer(ctx, 0);
+  int _var1 = (int) duk_get_int(ctx, 1);
+  int _var2 = (int) duk_get_int(ctx, 2);
+  int _var3 = (int) duk_get_int(ctx, 3);
+  unsigned int _var4 = (unsigned int) duk_get_uint(ctx, 4);
+  void * _var5 = (void * ) duk_get_pointer(ctx, 5);
+  draw_convert_xyz(_var0, _var1, _var2, _var3, _var4, _var5);
+}
+duk_ret_t draw_convert_rgbq_thunk(duk_context * ctx) {
+  void * _var0 = (void * ) duk_get_pointer(ctx, 0);
+  unsigned int _var1 = (unsigned int) duk_get_uint(ctx, 1);
+  void * _var2 = (void * ) duk_get_pointer(ctx, 2);
+  void * _var3 = (void * ) duk_get_pointer(ctx, 3);
+  draw_convert_rgbq(_var0, _var1, _var2, _var3);
+}
+duk_ret_t draw_convert_st_thunk(duk_context * ctx) {
+  void * _var0 = (void * ) duk_get_pointer(ctx, 0);
+  unsigned int _var1 = (unsigned int) duk_get_uint(ctx, 1);
+  void * _var2 = (void * ) duk_get_pointer(ctx, 2);
+  void * _var3 = (void * ) duk_get_pointer(ctx, 3);
+  draw_convert_st(_var0, _var1, _var2, _var3);
+}
 
 int main(int argc, char **argv) {
   duk_context *ctx;
@@ -352,6 +366,9 @@ int main(int argc, char **argv) {
   duk_push_c_function(ctx, create_world_view_thunk, 3); duk_put_prop_string(ctx, -2, "create_world_view");
   duk_push_c_function(ctx, create_local_screen_thunk, 4); duk_put_prop_string(ctx, -2, "create_local_screen");
   duk_push_c_function(ctx, calculate_vertices_thunk, 3); duk_put_prop_string(ctx, -2, "calculate_vertices");
+  duk_push_c_function(ctx, draw_convert_xyz_thunk, 6); duk_put_prop_string(ctx, -2, "draw_convert_xyz");
+  duk_push_c_function(ctx, draw_convert_rgbq_thunk, 4); duk_put_prop_string(ctx, -2, "draw_convert_rgbq");
+  duk_push_c_function(ctx, draw_convert_st_thunk, 4); duk_put_prop_string(ctx, -2, "draw_convert_st");
 
   duk_push_pointer(ctx, object_position); duk_put_prop_string(ctx, -2, "object_position");
   duk_push_pointer(ctx, object_rotation); duk_put_prop_string(ctx, -2, "object_rotation");
@@ -364,6 +381,11 @@ int main(int argc, char **argv) {
   duk_push_pointer(ctx, temp_vertices); duk_put_prop_string(ctx, -2, "temp_vertices");
   duk_push_pointer(ctx, vertices); duk_put_prop_string(ctx, -2, "vertices");
   duk_push_uint(ctx, vertex_count); duk_put_prop_string(ctx, -2, "vertex_count");
+  duk_push_pointer(ctx, xyz); duk_put_prop_string(ctx, -2, "xyz");
+  duk_push_pointer(ctx, rgbaq); duk_put_prop_string(ctx, -2, "rgbaq");
+  duk_push_pointer(ctx, colours); duk_put_prop_string(ctx, -2, "colours");
+  duk_push_pointer(ctx, st); duk_put_prop_string(ctx, -2, "st");
+  duk_push_pointer(ctx, coordinates); duk_put_prop_string(ctx, -2, "coordinates");
 
   duk_push_array(ctx);
   duk_push_pointer(ctx, packets[0]);
