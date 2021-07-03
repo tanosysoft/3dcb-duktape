@@ -437,7 +437,7 @@ int main(int argc, char **argv) {
   duk_push_c_function(ctx, get_packet_data, 1); duk_put_prop_string(ctx, -2, "get_packet_data");
   duk_push_c_function(ctx, ptradd, 2); duk_put_prop_string(ctx, -2, "ptradd");
   duk_push_c_function(ctx, ptrdiff, 2); duk_put_prop_string(ctx, -2, "ptrdiff");
-  duk_push_c_function(ctx, memcpy_thunk, 2); duk_put_prop_string(ctx, -2, "memcpy");
+  duk_push_c_function(ctx, memcpy_thunk, 3); duk_put_prop_string(ctx, -2, "memcpy");
   duk_push_c_function(ctx, memwrite_u64, 2); duk_put_prop_string(ctx, -2, "memwrite_u64");
   duk_push_c_function(ctx, memread_int, 2); duk_put_prop_string(ctx, -2, "memread_int");
   duk_push_c_function(ctx, draw_model, 1); duk_put_prop_string(ctx, -2, "draw_model");

@@ -2,7 +2,7 @@ console.log(['Homebrew', 'Computer', 'Club'].map(function(x) { return x.toUpperC
 
 var object_rotation = [0, 0];
 var context = 0;
-var current, q_start, q, dw, i;
+var current, q_start, q, dw, i, j;
 
 while(true) {
   object_rotation[0] += 0.008; while (object_rotation[0] > 3.14) { object_rotation[0] -= 6.28 }
@@ -28,7 +28,13 @@ while(true) {
   // Draw the triangles using triangle primitive type.
   // Use a 64-bit pointer to simplify adding data to the packet.
   dw = c.draw_prim_start(q, 0, c.prim, c.color);
-  dw = c.draw_model(dw);
+
+  for (i = 0; i < c.points_count; i++) {
+    j = c.memread_int(c.points, i);
+    c.memcpy(dw, c.ptradd(c.rgbaq, j * 8), 8); dw += 8;
+    c.memcpy(dw, c.ptradd(c.st, j * 8), 8); dw += 8;
+    c.memcpy(dw, c.ptradd(c.xyz, j * 8), 8); dw += 8;
+  }
 
   // Check if we're in middle of a qword or not.
   if ((dw|0) % 16) { c.memwrite_u64(dw, 0); dw += 8 }
@@ -41,17 +47,13 @@ while(true) {
 
   // Now send our current dma chain.
   c.dma_wait_fast();
-  console.log(c.DMA_CHANNEL_GIF, c.ptrdiff(q, q_start) / 8);
   c.dma_channel_send_normal(c.DMA_CHANNEL_GIF, q_start, c.ptrdiff(q, q_start) / 8, 0, 0);
-  console.log('dma sent');
 
   // Now switch our packets so we can process data while the DMAC is working.
   context ^= 1;
 
   // Wait for scene to finish drawing
   c.draw_wait_finish();
-  console.log('draw finished');
 
   c.graph_wait_vsync();
-  console.log('vsync waited');
 }
